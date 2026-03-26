@@ -1,8 +1,83 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<BookingApp.Models.Service>
+@{
+    ViewData["Title"] = "Strona główna";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- Hero Section -->
+<section class="hero-section text-white py-5 mb-5">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-3">
+            <i class="fas fa-scissors me-3"></i>Salon Fryzjerski
+        </h1>
+        <p class="lead mb-4">Profesjonalne usługi fryzjerskie. Zarezerwuj wizytę online!</p>
+        @if (!User.Identity.IsAuthenticated)
+        {
+            <a asp-controller="Account" asp-action="Register" class="btn btn-light btn-lg me-2">
+                <i class="fas fa-user-plus me-2"></i>Zarejestruj się
+            </a>
+        }
+        <a asp-controller="Reservations" asp-action="Create" class="btn btn-outline-light btn-lg">
+            <i class="fas fa-calendar-plus me-2"></i>Zarezerwuj teraz
+        </a>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="container mb-5">
+    <div class="row g-4 text-center">
+        <div class="col-md-4">
+            <div class="feature-card p-4">
+                <i class="fas fa-calendar-check fa-3x text-primary mb-3"></i>
+                <h5>Łatwa rezerwacja</h5>
+                <p class="text-muted">Zarezerwuj wizytę online w kilka sekund</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card p-4">
+                <i class="fas fa-star fa-3x text-warning mb-3"></i>
+                <h5>Profesjonaliści</h5>
+                <p class="text-muted">Doświadczeni fryzjerzy z wieloletnią praktyką</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card p-4">
+                <i class="fas fa-clock fa-3x text-success mb-3"></i>
+                <h5>Elastyczne terminy</h5>
+                <p class="text-muted">Szeroka oferta godzin — od rana do wieczora</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Services Preview -->
+<section class="container mb-5">
+    <h2 class="text-center mb-4">Nasze usługi</h2>
+    <div class="row g-4">
+        @foreach (var service in Model)
+        {
+            <div class="col-md-4">
+                <div class="card service-card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">@service.Name</h5>
+                        <p class="card-text text-muted">@service.Description</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="badge bg-primary fs-6">@service.Price.ToString("C", new System.Globalization.CultureInfo("pl-PL"))</span>
+                            <small class="text-muted"><i class="fas fa-clock me-1"></i>@service.DurationMinutes min</small>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a asp-controller="Reservations" asp-action="Create" asp-route-serviceId="@service.Id"
+                           class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-calendar-plus me-1"></i>Zarezerwuj
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="text-center mt-4">
+        <a asp-controller="Home" asp-action="Services" class="btn btn-outline-primary">
+            Zobacz wszystkie usługi
+        </a>
+    </div>
+</section>
