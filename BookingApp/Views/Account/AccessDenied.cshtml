@@ -1,0 +1,13 @@
+﻿@{
+    ViewData["Title"] = "Brak dostępu";
+    Layout = "_Layout";
+}
+
+<div class="container py-5 text-center">
+    <i class="fas fa-ban fa-5x text-danger mb-4"></i>
+    <h2 class="fw-bold">Brak dostępu</h2>
+    <p class="text-muted lead">Nie masz uprawnień do wyświetlenia tej strony.</p>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary mt-3">
+        <i class="fas fa-home me-2"></i>Powrót do strony głównej
+    </a>
+</div>

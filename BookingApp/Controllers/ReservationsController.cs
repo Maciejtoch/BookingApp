@@ -23,7 +23,6 @@ namespace BookingApp.Controllers
             _userManager = userManager;
         }
 
-        // GET: My reservations
         public async Task<IActionResult> Index()
         {
             var userId = _userManager.GetUserId(User);
@@ -35,66 +34,70 @@ namespace BookingApp.Controllers
             return View(reservations);
         }
 
-        // GET: Create reservation
         public async Task<IActionResult> Create(int? serviceId)
         {
             ViewBag.Services = new SelectList(
                 await _context.Services.Where(s => s.IsActive).ToListAsync(),
                 "Id", "Name", serviceId);
-
-            if (serviceId.HasValue)
-            {
-                ViewBag.TimeSlots = await _context.TimeSlots
-                    .Where(t => t.ServiceId == serviceId && t.IsAvailable && t.DateTime > DateTime.Now)
-                    .OrderBy(t => t.DateTime)
-                    .Select(t => new SelectListItem
-                    {
-                        Value = t.Id.ToString(),
-                        Text = t.DateTime.ToString("dddd, dd MMM yyyy HH:mm")
-                    })
-                    .ToListAsync();
-            }
-
             return View(new Reservation { ServiceId = serviceId ?? 0 });
         }
 
-        // POST: Create reservation
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Reservation reservation)
+        public async Task<IActionResult> Create([FromForm] int ServiceId, [FromForm] int? TimeSlotId, [FromForm] string Notes)
         {
-            reservation.UserId = _userManager.GetUserId(User);
-            reservation.CreatedAt = DateTime.Now;
-            reservation.Status = ReservationStatus.Pending;
+            bool errors = false;
 
-            // Get date from time slot
-            if (reservation.TimeSlotId.HasValue)
+            if (ServiceId == 0)
             {
-                var slot = await _context.TimeSlots.FindAsync(reservation.TimeSlotId);
+                ModelState.AddModelError("", "Musisz wybrać usługę.");
+                errors = true;
+            }
+
+            if (!TimeSlotId.HasValue || TimeSlotId == 0)
+            {
+                ModelState.AddModelError("", "Musisz wybrać termin wizyty.");
+                errors = true;
+            }
+
+            TimeSlot slot = null;
+            if (!errors && TimeSlotId.HasValue)
+            {
+                slot = await _context.TimeSlots.FindAsync(TimeSlotId);
                 if (slot == null || !slot.IsAvailable)
                 {
-                    ModelState.AddModelError("", "Wybrany termin jest niedostępny.");
-                }
-                else
-                {
-                    reservation.Date = slot.DateTime;
-                    slot.IsAvailable = false;
+                    ModelState.AddModelError("", "Wybrany termin jest już niedostępny. Wybierz inny.");
+                    errors = true;
                 }
             }
 
-            if (ModelState.IsValid)
+            if (errors)
             {
-                _context.Reservations.Add(reservation);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "Rezerwacja została złożona! Oczekuje na zatwierdzenie.";
-                return RedirectToAction(nameof(Index));
+                ViewBag.Services = new SelectList(
+                    await _context.Services.Where(s => s.IsActive).ToListAsync(), "Id", "Name", ServiceId);
+                return View(new Reservation { ServiceId = ServiceId, Notes = Notes });
             }
 
-            ViewBag.Services = new SelectList(await _context.Services.Where(s => s.IsActive).ToListAsync(), "Id", "Name");
-            return View(reservation);
+            slot.IsAvailable = false;
+
+            var reservation = new Reservation
+            {
+                UserId = _userManager.GetUserId(User),
+                ServiceId = ServiceId,
+                TimeSlotId = TimeSlotId,
+                Date = slot.DateTime,
+                Notes = Notes,
+                Status = ReservationStatus.Pending,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.Reservations.Add(reservation);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Rezerwacja została złożona! Oczekuje na zatwierdzenie przez salon.";
+            return RedirectToAction(nameof(Index));
         }
 
-        // GET: Edit
         public async Task<IActionResult> Edit(int id)
         {
             var userId = _userManager.GetUserId(User);
@@ -108,11 +111,9 @@ namespace BookingApp.Controllers
                 TempData["Error"] = "Można edytować tylko rezerwacje oczekujące.";
                 return RedirectToAction(nameof(Index));
             }
-
             return View(reservation);
         }
 
-        // POST: Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, string notes)
@@ -120,15 +121,13 @@ namespace BookingApp.Controllers
             var userId = _userManager.GetUserId(User);
             var reservation = await _context.Reservations
                 .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
-
             if (reservation == null) return NotFound();
             reservation.Notes = notes;
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Rezerwacja została zaktualizowana.";
+            TempData["Success"] = "Notatka została zaktualizowana.";
             return RedirectToAction(nameof(Index));
         }
 
-        // POST: Cancel
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id)
@@ -137,20 +136,15 @@ namespace BookingApp.Controllers
             var reservation = await _context.Reservations
                 .Include(r => r.TimeSlot)
                 .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
-
             if (reservation == null) return NotFound();
             reservation.Status = ReservationStatus.Cancelled;
-
-            // Free up the time slot
             if (reservation.TimeSlot != null)
                 reservation.TimeSlot.IsAvailable = true;
-
             await _context.SaveChangesAsync();
             TempData["Success"] = "Rezerwacja została anulowana.";
             return RedirectToAction(nameof(Index));
         }
 
-        // AJAX: Get time slots for service
         [HttpGet]
         public async Task<IActionResult> GetTimeSlots(int serviceId)
         {

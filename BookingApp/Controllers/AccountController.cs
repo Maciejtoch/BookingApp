@@ -18,10 +18,8 @@ namespace BookingApp.Controllers
             _signInManager = signInManager;
         }
 
-        // GET: Register
         public IActionResult Register() => View();
 
-        // POST: Register
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
@@ -42,6 +40,7 @@ namespace BookingApp.Controllers
             {
                 await _userManager.AddToRoleAsync(user, "User");
                 await _signInManager.SignInAsync(user, isPersistent: false);
+                TempData["Success"] = "Konto zostało utworzone. Witaj!";
                 return RedirectToAction("Index", "Home");
             }
 
@@ -51,35 +50,40 @@ namespace BookingApp.Controllers
             return View(model);
         }
 
-        // GET: Login
         public IActionResult Login(string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
 
-        // POST: Login
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
         {
             if (!ModelState.IsValid) return View(model);
 
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+            var result = await _signInManager.PasswordSignInAsync(
+                model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
             if (result.Succeeded)
-                return LocalRedirect(returnUrl ?? "/");
+            {
+                TempData["Success"] = "Zalogowano pomyślnie!";
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    return Redirect(returnUrl);
+                return RedirectToAction("Index", "Home");
+            }
 
             ModelState.AddModelError("", "Nieprawidłowy email lub hasło.");
             return View(model);
         }
 
-        // POST: Logout
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return RedirectToAction("Index", "Home");
+            // Przekieruj na stronę logowania zamiast na "/" żeby uniknąć ERR po wylogowaniu
+            return RedirectToAction("Login", "Account");
         }
 
         public IActionResult AccessDenied() => View();

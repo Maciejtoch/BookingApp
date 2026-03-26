@@ -1,5 +1,36 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<BookingApp.Models.Reservation>
 @{
+    ViewData["Title"] = "Moje rezerwacje";
 }
+<div class="container py-4">
+    <h2>Moje rezerwacje</h2>
+    <a asp-action="Create" class="btn btn-primary mb-3">
+        <i class="fas fa-plus me-2"></i>Nowa rezerwacja
+    </a>
+    <table class="table table-striped">
+        <thead><tr><th>Usługa</th><th>Data</th><th>Status</th><th>Akcje</th></tr></thead>
+        <tbody>
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td>@r.Service?.Name</td>
+                    <td>@r.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td><span class="badge status-badge-@r.Status">@r.Status</span></td>
+                    <td>
+                        @if (r.Status == BookingApp.Models.ReservationStatus.Pending)
+                        {
+                            <a asp-action="Edit" asp-route-id="@r.Id" class="btn btn-sm btn-warning">Edytuj</a>
+                            <form asp-action="Cancel" asp-route-id="@r.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Anulować rezerwację?')">
+                                    Anuluj
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

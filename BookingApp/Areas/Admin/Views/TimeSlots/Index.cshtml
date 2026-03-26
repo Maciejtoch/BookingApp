@@ -1,5 +1,127 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<BookingApp.Models.TimeSlot>
 @{
+    ViewData["Title"] = "Terminy";
 }
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Zarządzanie terminami</h4>
+    <div class="d-flex gap-2">
+        <a asp-area="Admin" asp-controller="TimeSlots" asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Dodaj termin
+        </a>
+    </div>
+</div>
+
+<!-- Bulk generate form -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h6 class="mb-0"><i class="fas fa-magic me-2 text-primary"></i>Masowe generowanie terminów</h6>
+    </div>
+    <div class="card-body">
+        <form asp-area="Admin" asp-controller="TimeSlots" asp-action="BulkCreate" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Usługa</label>
+                    <select name="serviceId" class="form-select" asp-items="ViewBag.Services" required>
+                        <option value="">-- Wybierz --</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Od daty</label>
+                    <input type="date" name="startDate" class="form-control"
+                           value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Do daty</label>
+                    <input type="date" name="endDate" class="form-control"
+                           value="@DateTime.Today.AddDays(7).ToString("yyyy-MM-dd")" required />
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label fw-semibold">Od godz.</label>
+                    <input type="number" name="startHour" class="form-control" value="9" min="6" max="20" />
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label fw-semibold">Do godz.</label>
+                    <input type="number" name="endHour" class="form-control" value="17" min="6" max="22" />
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label fw-semibold">Co (h)</label>
+                    <input type="number" name="intervalHours" class="form-control" value="1" min="1" max="4" />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-magic me-1"></i>Generuj
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Filter by service -->
+<div class="mb-3">
+    <form method="get" class="d-flex gap-2 align-items-center">
+        <label class="form-label mb-0 fw-semibold">Filtruj wg usługi:</label>
+        <select name="serviceId" class="form-select form-select-sm" style="width:250px"
+                asp-items="ViewBag.Services" onchange="this.form.submit()">
+            <option value="">Wszystkie</option>
+        </select>
+    </form>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Usługa</th>
+                    <th>Data i godzina</th>
+                    <th>Dzień tygodnia</th>
+                    <th>Dostępny</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model)
+                {
+                    <tr>
+                        <td class="text-muted">#@t.Id</td>
+                        <td>@t.Service?.Name</td>
+                        <td class="fw-semibold">@t.DateTime.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td><small class="text-muted">@t.DateTime.ToString("dddd")</small></td>
+                        <td>
+                            @if (t.IsAvailable)
+                            {
+                                <span class="badge bg-success">Dostępny</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Zajęty</span>
+                            }
+                        </td>
+                        <td>
+                            <form asp-area="Admin" asp-controller="TimeSlots" asp-action="Delete"
+                                  asp-route-id="@t.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Usunąć ten termin?')">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            Brak terminów. Użyj generatora powyżej!
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

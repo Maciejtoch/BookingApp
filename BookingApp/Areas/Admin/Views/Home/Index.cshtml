@@ -1,5 +1,118 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
+﻿@{
+    ViewData["Title"] = "Dashboard";
 }
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card text-white" style="background: linear-gradient(135deg,#667eea,#764ba2)">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fs-2 fw-bold">@ViewBag.TotalReservations</div>
+                        <div class="opacity-75">Wszystkich rezerwacji</div>
+                    </div>
+                    <i class="fas fa-calendar fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card text-white" style="background: linear-gradient(135deg,#f6d365,#fda085)">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fs-2 fw-bold">@ViewBag.PendingReservations</div>
+                        <div class="opacity-75">Oczekujących</div>
+                    </div>
+                    <i class="fas fa-hourglass-half fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card text-white" style="background: linear-gradient(135deg,#43e97b,#38f9d7)">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fs-2 fw-bold">@ViewBag.ApprovedReservations</div>
+                        <div class="opacity-75">Zatwierdzonych</div>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card text-white" style="background: linear-gradient(135deg,#4facfe,#00f2fe)">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fs-2 fw-bold">@ViewBag.TotalServices</div>
+                        <div class="opacity-75">Usług</div>
+                    </div>
+                    <i class="fas fa-scissors fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Ostatnie rezerwacje</h5>
+        <a asp-area="Admin" asp-controller="Reservations" asp-action="Index" class="btn btn-sm btn-outline-primary">
+            Zobacz wszystkie
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Klient</th>
+                    <th>Usługa</th>
+                    <th>Data</th>
+                    <th>Status</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in (IEnumerable<BookingApp.Models.Reservation>)ViewBag.RecentReservations)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@r.User?.FullName</div>
+                            <small class="text-muted">@r.User?.Email</small>
+                        </td>
+                        <td>@r.Service?.Name</td>
+                        <td>@r.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            <span class="badge rounded-pill
+                                    @(r.Status == BookingApp.Models.ReservationStatus.Pending ? "bg-warning text-dark" :
+                                                                    r.Status == BookingApp.Models.ReservationStatus.Approved ? "bg-success" :
+                                                                    r.Status == BookingApp.Models.ReservationStatus.Rejected ? "bg-danger" : "bg-secondary")">
+                                @(r.Status == BookingApp.Models.ReservationStatus.Pending ? "Oczekuje" :
+                                                            r.Status == BookingApp.Models.ReservationStatus.Approved ? "Zatwierdzona" :
+                                                            r.Status == BookingApp.Models.ReservationStatus.Rejected ? "Odrzucona" : "Anulowana")
+                        </span>
+                    </td>
+                    <td>
+                        @if (r.Status == BookingApp.Models.ReservationStatus.Pending)
+                            {
+                                <form asp-area="Admin" asp-controller="Reservations" asp-action="Approve"
+                                      asp-route-id="@r.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-success">✓</button>
+                                </form>
+                                <form asp-area="Admin" asp-controller="Reservations" asp-action="Reject"
+                                      asp-route-id="@r.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-danger">✕</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
