@@ -32,6 +32,7 @@ namespace BookingApp.Data
                     Email = "admin@bookingapp.pl",
                     FirstName = "Adam",
                     LastName = "Admin",
+                    PhoneNumber = "",
                     EmailConfirmed = true
                 };
                 var result = await userManager.CreateAsync(admin, "Admin123!");
@@ -48,6 +49,7 @@ namespace BookingApp.Data
                     Email = "jan@example.com",
                     FirstName = "Jan",
                     LastName = "Kowalski",
+                    PhoneNumber = "",
                     EmailConfirmed = true
                 };
                 var result = await userManager.CreateAsync(user, "User123!");

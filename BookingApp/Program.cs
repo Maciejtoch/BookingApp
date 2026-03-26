@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite("Data Source=bookingapp.db"));
 
 // Identity
 builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
