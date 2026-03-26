@@ -1,13 +1,16 @@
 ﻿using BookingApp.Data;
 using BookingApp.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BookingApp.Controllers
+namespace BookingApp.Areas.Admin.Controllers
 {
+    [Area("Admin")]
+    [Authorize(Roles = "Admin")]
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -19,33 +22,17 @@ namespace BookingApp.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var services = await _context.Services
-                .Where(s => s.IsActive)
-                .Take(6)
+            ViewBag.TotalReservations = await _context.Reservations.CountAsync();
+            ViewBag.PendingReservations = await _context.Reservations.CountAsync(r => r.Status == ReservationStatus.Pending);
+            ViewBag.ApprovedReservations = await _context.Reservations.CountAsync(r => r.Status == ReservationStatus.Approved);
+            ViewBag.TotalServices = await _context.Services.CountAsync();
+            ViewBag.RecentReservations = await _context.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Service)
+                .OrderByDescending(r => r.CreatedAt)
+                .Take(5)
                 .ToListAsync();
-            return View(services);
+            return View();
         }
-
-        public async Task<IActionResult> Services()
-        {
-            var services = await _context.Services
-                .Where(s => s.IsActive)
-                .ToListAsync();
-            return View(services);
-        }
-
-        public IActionResult Privacy() => View();
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-    }
-
-    public class ErrorViewModel
-    {
-        public string RequestId { get; set; }
-        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
     }
 }
