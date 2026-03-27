@@ -1,5 +1,48 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model BookingApp.Models.Reservation
 @{
+    ViewData["Title"] = "Edytuj rezerwację";
+    Layout = "_Layout";
 }
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-warning p-4">
+                    <h4 class="mb-0 fw-bold text-dark">
+                        <i class="fas fa-edit me-2"></i>Edytuj rezerwację
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-light border mb-4">
+                        <div class="fw-semibold mb-1">@Model.Service?.Name</div>
+                        <div class="text-muted small">
+                            <i class="fas fa-calendar me-1"></i>
+                            @Model.Date.ToString("dddd, dd MMMM yyyy HH:mm", new System.Globalization.CultureInfo("pl-PL"))
+                        </div>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Możesz edytować tylko notatkę. Aby zmienić termin — anuluj i złóż nową rezerwację.
+                    </p>
+                    <form asp-controller="Reservations" asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Notatki / życzenia</label>
+                            <textarea name="notes" class="form-control" rows="3"
+                                      placeholder="np. preferowany fryzjer, alergie...">@Model.Notes</textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-warning fw-semibold">
+                                <i class="fas fa-save me-2"></i>Zapisz
+                            </button>
+                            <a asp-controller="Reservations" asp-action="Index" class="btn btn-outline-secondary">
+                                Anuluj
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
